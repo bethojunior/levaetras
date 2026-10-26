@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+.env*
+*.tsbuildinfo
+test-results
+playwright-report
+tests
+
+data/
+backups/
+.admin-credentials
+.deployed-image

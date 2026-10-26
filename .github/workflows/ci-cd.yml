@@ -1,0 +1,104 @@
+name: Validate, publish and deploy
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: paritins-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:deploy
+      - run: npm run build
+      - run: npm run typecheck
+      - run: docker compose config --quiet
+      - name: Build and smoke-test container
+        run: |
+          docker compose up -d --build --wait
+          curl --fail http://localhost:3335/api/health
+      - if: always()
+        run: docker compose down
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: image
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        id: build
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+  deploy:
+    if: vars.DEPLOY_ENABLED == 'true' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: publish
+    runs-on: [self-hosted, linux, x64, paritins-production]
+    environment: production
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    concurrency:
+      group: paritins-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Isolate registry credentials
+        run: |
+          paritins_docker_config=$(mktemp -d "$RUNNER_TEMP/paritins-docker.XXXXXX")
+          printf 'DOCKER_CONFIG=%s\n' "$paritins_docker_config" >> "$GITHUB_ENV"
+      - name: Check deployment prerequisites
+        run: |
+          docker info > /dev/null
+          docker compose version
+      - name: Check deployment configuration
+        run: |
+          test -r "$HOME/paritins/.env" || { echo 'Crie ~/paritins/.env com ADMIN_USER e ADMIN_PASSWORD (veja docs/DEPLOY-VM.md).' >&2; exit 1; }
+          grep -q '^ADMIN_PASSWORD=.\{12,\}' "$HOME/paritins/.env" || { echo 'ADMIN_PASSWORD ausente ou menor que 12 caracteres em ~/paritins/.env.' >&2; exit 1; }
+      - name: Authenticate to GHCR for this job
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: |
+          install -m 700 -d "$DOCKER_CONFIG"
+          printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+      - name: Deploy on this VM
+        env:
+          IMAGE: ${{ needs.publish.outputs.image }}@${{ needs.publish.outputs.digest }}
+        run: bash scripts/deploy-local.sh "$IMAGE" "$HOME/paritins"
+      - name: Remove temporary registry credentials
+        if: always() && env.DOCKER_CONFIG != ''
+        run: |
+          docker logout ghcr.io || true
+          rm -rf -- "$DOCKER_CONFIG"

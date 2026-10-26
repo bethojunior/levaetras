@@ -1,0 +1,29 @@
+services:
+  web:
+    image: ${PARITINS_IMAGE:-paritins-site:local}
+    build:
+      context: .
+    ports:
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-3335}:3335"
+    environment:
+      PORT: "3335"
+      DATABASE_PATH: /app/data/paritins.sqlite
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      ADMIN_USER: ${ADMIN_USER:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      - paritins_data:/app/data
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  paritins_data:

@@ -4,9 +4,9 @@ services:
     build:
       context: .
     ports:
-      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-3335}:3335"
+      - "${BIND_ADDRESS:-127.0.0.1}:${PORT:-7000}:7000"
     environment:
-      PORT: "3335"
+      PORT: "7000"
       DATABASE_PATH: /app/data/paritins.sqlite
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       ADMIN_USER: ${ADMIN_USER:-}

@@ -30,7 +30,7 @@ function fixture(t) {
     "scripts/deploy.sh",
   ])
     copyFileSync(resolve(file), join(repo, file));
-  writeFileSync(join(target, ".env"), "PORT=3335\nCOOKIE_SECURE=true\n");
+  writeFileSync(join(target, ".env"), "PORT=7000\nCOOKIE_SECURE=true\n");
   writeFileSync(
     join(bin, "docker"),
     `#!${process.execPath}\nconst fs=require('node:fs');const args=process.argv.slice(2);fs.appendFileSync(process.env.MOCK_LOG,JSON.stringify({args,image:process.env.PARITINS_IMAGE,cwd:process.cwd()})+'\\n');if(args.includes('test'))process.exit(process.env.MOCK_EXISTING==='1'?0:1);if(args[1]==='up'&&process.env.MOCK_FAIL==='1'&&process.env.PARITINS_IMAGE===process.env.MOCK_NEW)process.exit(1);`,
@@ -66,7 +66,7 @@ test("deploy uses stable directory and preserves environment and data", (t) => {
   assert.equal(result.status, 0, result.stderr);
   assert.equal(
     readFileSync(join(f.target, ".env"), "utf8"),
-    "PORT=3335\nCOOKIE_SECURE=true\n",
+    "PORT=7000\nCOOKIE_SECURE=true\n",
   );
   assert.equal(readFileSync(join(f.target, "data-marker"), "utf8"), "keep");
   assert.equal(

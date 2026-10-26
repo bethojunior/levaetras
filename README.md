@@ -8,7 +8,7 @@ Infra no mesmo padrão do speed-site: Docker standalone, compose, CI/CD no GHCR 
 ```bash
 cp .env.example .env.local   # defina ADMIN_USER e ADMIN_PASSWORD (12+ caracteres)
 npm install
-npm run dev                  # http://localhost:3000  ·  painel em /admin
+npm run dev                  # http://localhost:7000  ·  painel em /admin
 ```
 
 - Login do painel: `ADMIN_USER` / `ADMIN_PASSWORD` do `.env`.

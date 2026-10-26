@@ -6,7 +6,7 @@ if (!existsSync(server))
   throw new Error("Execute npm run build antes de iniciar o servidor.");
 const args = process.argv.slice(2);
 const portIndex = args.indexOf("--port");
-const port = portIndex >= 0 ? args[portIndex + 1] : process.env.PORT || "3000";
+const port = portIndex >= 0 ? args[portIndex + 1] : process.env.PORT || "7000";
 if (!port || !/^\d+$/.test(port) || Number(port) < 1 || Number(port) > 65535)
   throw new Error("Porta inválida.");
 process.env.PORT = port;

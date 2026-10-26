@@ -60,7 +60,7 @@ O deploy exige `~/paritins/.env` já existente, contendo as credenciais do paine
 mkdir -p ~/paritins
 chmod 700 ~/paritins
 cat > ~/paritins/.env <<'ENV'
-PORT=3335
+PORT=7000
 BIND_ADDRESS=127.0.0.1
 COOKIE_SECURE=true
 ADMIN_USER=admin
@@ -115,7 +115,7 @@ O último comando cria a conta administrativa de produção, com senha solicitad
 
 ## 6. Acesso pela VPN e HTTPS
 
-O contêiner fica em `127.0.0.1:3335`. Para site privado, use proxy HTTPS acessível pela VPN (por exemplo, Tailscale Serve). Para site público, configure domínio e proxy Caddy/Nginx com HTTPS. Restringir SSH à VPN não restringe automaticamente `/admin`; se o painel precisar ser privado e o site público, configure essa separação no proxy.
+O contêiner fica em `127.0.0.1:7000`. Para site privado, use proxy HTTPS acessível pela VPN (por exemplo, Tailscale Serve). Para site público, configure domínio e proxy Caddy/Nginx com HTTPS. Restringir SSH à VPN não restringe automaticamente `/admin`; se o painel precisar ser privado e o site público, configure essa separação no proxy.
 
 A VM precisa conseguir acessar os domínios exigidos pelo GitHub Runner, o GHCR e os endpoints de download das camadas da imagem. Uma VPN sem saída para esses serviços impede o deploy; não é necessário liberar o SSH público.
 

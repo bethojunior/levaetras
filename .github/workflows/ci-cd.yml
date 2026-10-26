@@ -27,7 +27,7 @@ jobs:
       - name: Build and smoke-test container
         run: |
           docker compose up -d --build --wait
-          curl --fail http://localhost:3335/api/health
+          curl --fail http://localhost:7000/api/health
       - if: always()
         run: docker compose down
   publish:
